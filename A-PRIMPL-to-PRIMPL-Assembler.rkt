@@ -65,165 +65,31 @@
       (match (car lst)
         [`(const ,x ,y)
           (begin
-            (find-source empty empty x)
+            (find-source empty x)
             (second-loop (cdr lst) lst2))]
         [`(data ,x ,y)
           (begin 
-            (find-source empty empty x)
+            (find-source empty x)
             (second-loop (cdr lst) lst2))]
         [`(data ,x (,y ,z))
           (begin 
-            (find-source empty empty x)
+            (find-source empty x)
             (second-loop (cdr lst) lst2))]
         [`(data ,x ...)
           (begin 
-            (loop-through-list empty empty (rest (rest (first lst))))
+            (loop-through-list empty (rest (rest (first lst))))
             (second-loop (cdr lst) lst2))]
-        [`(add ,x ,y ,z)
-         (begin
-           (mama-halp x)
-           (mama-halp y)
-           (mama-halp z)
-           (second-loop (cdr lst) lst2))]
-        [`(sub ,x ,y ,z)
-         (begin
-           (mama-halp x)
-           (mama-halp y)
-           (mama-halp z)
-           (second-loop (cdr lst) lst2))]
-        [`(mul ,x ,y ,z)
-         (begin
-           (mama-halp x)
-           (mama-halp y)
-           (mama-halp z)
-           (second-loop (cdr lst) lst2))]
-        [`(div ,x ,y ,z)
-         (begin
-           (mama-halp x)
-           (mama-halp y)
-           (mama-halp z)
-           (second-loop (cdr lst) lst2))]
-        [`(mod ,x ,y ,z)
-         (begin
-           (mama-halp x)
-           (mama-halp y)
-           (mama-halp z)
-           (second-loop (cdr lst) lst2))]
-
-       [`(gt ,x ,y ,z)
-         (begin
-           (mama-halp x)
-           (mama-halp y)
-           (mama-halp z)
-           (second-loop (cdr lst) lst2))]
-        [`(ge ,x ,y ,z)
-         (begin
-           (mama-halp x)
-           (mama-halp y)
-           (mama-halp z)
-           (second-loop (cdr lst) lst2))]
-        [`(lt ,x ,y ,z)
-         (begin
-           (mama-halp x)
-           (mama-halp y)
-           (mama-halp z)
-           (second-loop (cdr lst) lst2))]
-        [`(le ,x ,y ,z)
-         (begin
-           (mama-halp x)
-           (mama-halp y)
-           (mama-halp z)
-           (second-loop (cdr lst) lst2))]
-        [`(equal ,x ,y ,z)
-         (begin
-           (mama-halp x)
-           (mama-halp y)
-           (mama-halp z)
-           (second-loop (cdr lst) lst2))]
-        [`(not-equal ,x ,y ,z)
-         (begin
-           (mama-halp x)
-           (mama-halp y)
-           (mama-halp z)
-           (second-loop (cdr lst) lst2))]
-        [`(land ,x ,y ,z)
-         (begin
-           (mama-halp x)
-           (mama-halp y)
-           (mama-halp z)
-           (second-loop (cdr lst) lst2))]
-        [`(lor ,x ,y ,z)
-         (begin
-           (mama-halp x)
-           (mama-halp y)
-           (mama-halp z)
-           (second-loop (cdr lst) lst2))]
-        [`(lnot ,x ,y )
-         (begin
-           (mama-halp x)
-           (mama-halp y)
-           (second-loop (cdr lst) lst2))]
-        [`(jump ,x)
-         (begin
-           (mama-halp x)
-           (second-loop (cdr lst) lst2))]
-        [`(branch ,x ,y)
-         (begin
-           (mama-halp x)
-           (mama-halp y)
-           (second-loop (cdr lst) lst2))]
-        [`(move ,x ,y)
-         (begin
-           (mama-halp x)
-           (mama-halp y)
-           (second-loop (cdr lst) lst2))]
-        [`(print-val ,x)
-         (begin
-           (mama-halp x)
-           (second-loop (cdr lst) lst2))]
-
-        [`(print-string ,x)
-         (begin
-           (mama-halp x)
-           (second-loop (cdr lst) lst2))]
-        [`(label ,x)
-         (second-loop (cdr lst) lst2)]
-        [`(lit ,x)
-         (begin 
-            (mama-halp x)
-            (second-loop (cdr lst) lst2))]
-        [x (begin 
-            (mama-halp x)
-            (second-loop (cdr lst) lst2))]
+        [x (second-loop (cdr lst) lst2)]
       )
     ]
   )
 )
 
-(define (mama-halp x)
-  (cond
-    [(symbol? x) (find-source empty empty x)]
-    [(list? x) (daddy-halp x)]
-    [else (void)]))
-
-(define (daddy-halp x)
-  (cond
-    [(empty? x) void]
-    [(symbol? (first x))
-     (begin
-       (find-source empty empty (first x))
-       (daddy-halp (rest x)))]
-    [(list? (first x))
-     (begin
-       (find-source empty empty (first (first x)))
-       (daddy-halp (rest x)))]
-    [else (daddy-halp (rest x))]))
-
 ;; helper function of helper function to spo "circular" + "undefined"
-(define (find-source vis his key)
+(define (find-source vis key)
   (define stupid-error (hash-has-key? table key))
   (cond
-    [(equal? #f stupid-error) (error "find-source undefined ~a" key)]
+    [(equal? #f stupid-error) (error "undefined")]
     [else
      (define stoopid (hash-ref table key))
      (define element (third stoopid))
@@ -231,24 +97,21 @@
      (cond
        [(list? circular) (error "find-source | ~a | circular" key)] ;;we've already seen this value
        [(number? element) (void)] ;;lit we're done
-       [(boolean? element) (void)]
-       [(list? element) (loop-through-list vis his element)] ;;list will evalulatae, impossible for loop so reset vis array (data X 1 2 B A C)
+       [(list? element) (loop-through-list vis element)] ;;list will evalulatae, impossible for loop so reset vis array (data X 1 2 B A C)
        [(string=? "data" (first (hash-ref table element))) empty]
-       [(string=? "const" (first (hash-ref table element))) (find-source (cons key vis) his element)] ;;const mark true
-       [else (find-source vis his element)] ;;psymbol always evaulates, impossible for loop so reset vis array
+       [(string=? "const" (first (hash-ref table element))) (find-source (cons key vis) element)] ;;const mark true
+       [else (find-source vis element)] ;;psymbol always evaulates, impossible for loop so reset vis array
        )]
 ))
 
-(define (loop-through-list vis his lst)
+(define (loop-through-list vis lst)
   (cond
     [(empty? lst) void]
-    [(number? (first lst)) (loop-through-list vis his (rest lst))]
-    [(boolean? (first lst)) (loop-through-list vis his (rest lst))]
+    [(number? (first lst)) (loop-through-list vis (rest lst))]
     [else
       (begin
-        (define exists (member (car lst) his))
-        (if (list? exists) (loop-through-list vis his (cdr lst))
-            (find-source vis (cons (car lst) his) (car lst))))]))
+        (find-source vis (car lst))
+        (loop-through-list vis (cdr lst)))]))
 
 ;; convert A-primpl into primpl
 ;; "incorrect" error
@@ -347,9 +210,8 @@
         [x
           (cond
             [(number? x) (cons x (third-loop (rest lst)))]
-            [(boolean? x) (cons x (third-loop (rest lst)))]
-            [(string=? (first (hash-ref table x )) "data") (cons (second (hash-ref table x )) (third-loop (rest lst)))]
-            [(string=? (first (hash-ref table x )) "const") (cons (get-root x) (third-loop (rest lst)))]
+            [(string=? (first (hash-ref table x)) "data") (cons (second (hash-ref table x)) (third-loop (rest lst)))]
+            [(string=? (first (hash-ref table x)) "const") (cons (get-root x) (third-loop (rest lst)))]
             [else (error "third-loop | ~a | incorrect" x)])])])) 
 
 ;; (add A B C) this validates the A thing, throws "incorrect" error if something is used incorrectly
@@ -359,16 +221,16 @@
     [`(,a (,b)) 
       (cond
         [(number? a) (list a (list b))]
-        [(equal? (first (hash-ref table a )) "const") (list (get-root a) (list b))]
+        [(equal? (first (hash-ref table a)) "const") (list (get-root a) (list b))]
         [else (error "get-dest | ~a | incorrect" x)])] ;; (1 (5))
     [`(,a ,b)
       (cond
-        [(and (number? a) (string=? (first (hash-ref table b )) "data")) (list a (list (second (hash-ref table b ))))]
-        [(and (string=? (first (hash-ref table a )) "const") (string=? (first (hash-ref table b )) "data")) (list (get-root a) (list (second (hash-ref table b ))))]
+        [(and (number? a) (string=? (first (hash-ref table b)) "data")) (list a (list (second (hash-ref table b))))]
+        [(and (string=? (first (hash-ref table a)) "const") (string=? (first (hash-ref table b)) "data")) (list (get-root a) (list (second (hash-ref table b))))]
         [else (error "get-dest | ~a | incorrect" x)])]
     [a 
       (cond
-        [(string=? (first (hash-ref table a )) "data") (list (second (hash-ref table a )))]
+        [(string=? (first (hash-ref table a)) "data") (list (second (hash-ref table a)))]
         [else (error "get-dest | ~a | incorrect" x)])]))
     ; [a (error "get-dest | ~a | incorrect" x)]))
 
@@ -379,21 +241,20 @@
     [`(,a (,b))
       (cond
         [(number? a) (list a (list b))]
-        [(string=? (first (hash-ref table a )) "const") (list (get-root a) (list b))]
-        [(string=? (first (hash-ref table a )) "data") (list (second (hash-ref table a)) (list b))]
+        [(string=? (first (hash-ref table a)) "const") (list (get-root a) (list b))]
         [else (error "get-opd | ~a | incorrect" x)])]
     [`(,a ,b)
       (cond
-        [(and (number? a) (equal? (first (hash-ref table b )) "data")) (list a (list (second (hash-ref table b ))))]
-        [(and (equal? (first (hash-ref table a )) "const") (equal? (first (hash-ref table b )) "data")) (list (get-root a) (list (second (hash-ref table b ))))]
-        [(and (string=? (first (hash-ref table a )) "data") (string=? (first (hash-ref table b )) "data")) (list (second (hash-ref table a )) (list (second (hash-ref table b ))))]
-        [else (error "get-opd | ~a | incorrect" (hash-ref table b ))])]
+        [(and (number? a) (equal? (first (hash-ref table b)) "data")) (list a (list (second (hash-ref table b))))]
+        [(and (equal? (first (hash-ref table a)) "const") (equal? (first (hash-ref table b)) "data")) (list (get-root a) (list (second (hash-ref table b))))]
+        [(and (string=? (first (hash-ref table a)) "data") (string=? (first (hash-ref table b)) "data")) (list (second (hash-ref table a)) (list (second (hash-ref table b))))]
+        [else (error "get-opd | ~a | incorrect" (hash-ref table b))])]
     [a ;;might need to change
       (cond
         [(number? a) a]
         [(boolean? a) a]
-        [(equal? (first (hash-ref table a )) "const") (get-root a)]
-        [(equal? (first (hash-ref table a )) "data") (list (second (hash-ref table a )))]
+        [(equal? (first (hash-ref table a)) "const") (get-root a)]
+        [(equal? (first (hash-ref table a)) "data") (list (second (hash-ref table a)))]
         [else (error "get-opd | ~a | incorrect" x)])]))
     ; [a (error "get-opd | ~a | incorrect" x)]))
 
@@ -402,31 +263,28 @@
     [a
       (cond
         [(number? a) a]
-        [(equal? (first (hash-ref table a )) "const") (list (get-root a))]
-        [(equal? (first (hash-ref table a )) "label") (second (hash-ref table a ))]
-        [(equal? (first (hash-ref table a )) "data") (list (second (hash-ref table a )))]
-        [else (error "get-jump-opd | ~a | incorrect" (hash-ref table x ))])]))
+        [(equal? (first (hash-ref table a)) "const") (get-root a)]
+        [(equal? (first (hash-ref table a)) "label") (second (hash-ref table a))]
+        [(equal? (first (hash-ref table a)) "data") (second (hash-ref table a))]
+        [else (error "get-jump-opd | ~a | incorrect" (hash-ref table x))])]))
 
 
 (define (get-correct-datali list ) 
   (cond
     [(empty? list) empty]
     [(number? (first list)) (cons (first list) (get-correct-datali (rest list)))]
-    [(boolean? (first list)) (cons (first list) (get-correct-datali (rest list)))]
-    [(equal? (first (hash-ref table (first list))) "const" ) (cons (get-root (first list)) (get-correct-datali (rest list)))]
-    [(equal? (first (hash-ref table (first list))) "data" ) (cons (second (hash-ref table (first list) )) (get-correct-datali (rest list)))]
+    [(equal? (first (hash-ref table (first list))) "const") (cons (get-root (first list)) (get-correct-datali (rest list)))]
+    [(equal? (first (hash-ref table (first list))) "data") (cons (second (hash-ref table (first list))) (get-correct-datali (rest list)))]
     [else (error "get-correct-datali | ~a | incorrect" list)]))
   
 
 (define (get-root a)
   (cond
     [(number? a) a]
-    [(boolean? a) a]
-    [(string=? (first (hash-ref table a )) "const") (get-root (third (hash-ref table a )))] ;;keep traversing
-    [(string=? (first (hash-ref table a )) "data") (second (hash-ref table a ))]
-    [(string=? (first (hash-ref table a )) "label") (second (hash-ref table a ))]
+    [(string=? (first (hash-ref table a)) "const") (get-root (third (hash-ref table a)))] ;;keep traversing
+    [(string=? (first (hash-ref table a)) "data") (second (hash-ref table a))]
+    [(string=? (first (hash-ref table a)) "label") (second (hash-ref table a))]
     [else (error "get-oot | ~a | incorrect" a)]))
-
 
 
 
